@@ -87,6 +87,12 @@ class AppointmentController {
         .json({ error: 'Appointment date is not available.' });
     }
 
+    if(req.userId === provider_id) {
+      return res
+        .status(401)
+        .json({ error: 'You cannot create and appointment with yourself.' });
+    }
+
     const appointment = await Appointment.create({
       user_id: req.userId,
       provider_id,
@@ -97,7 +103,6 @@ class AppointmentController {
      * Notify appointment provider
      */
 
-    const user = await User.findByPk(req.userId);
     const formattedDate = format(
       hourStart,
       "'dia' dd 'de' MMMM', às ' H:MM'h'",
