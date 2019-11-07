@@ -111,6 +111,8 @@ class AppointmentController {
       { locale: ptBR }
     );
 
+    const user = await User.findByPk(req.userId);
+
     await Notification.create({
       content: `Novo agendamento de ${user.name} para ${formattedDate}`,
       user: provider_id,
