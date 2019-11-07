@@ -1,6 +1,6 @@
 import * as Yup from 'yup';
 import { startOfHour, parseISO, isBefore, format, subHours } from 'date-fns';
-import ptBR from 'date-fns/locale/pt-BR'
+import ptBR from 'date-fns/locale/pt-BR';
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
@@ -9,7 +9,7 @@ import Notification from '../schemas/Notification';
 import Mail from '../../lib/Mail';
 
 class AppointmentController {
-  async index (req, res) {
+  async index(req, res) {
     const { page = 1 } = req.query;
 
     const appointments = await Appointment.findAll({
@@ -28,14 +28,15 @@ class AppointmentController {
               model: File,
               as: 'avatar',
               attributes: ['id', 'path', 'url'],
-            }
-          ]
-        }
-      ]
+            },
+          ],
+        },
+      ],
     });
 
     return res.json(appointments);
   }
+
   async store(req, res) {
     const schema = Yup.object().shape({
       provider_id: Yup.number().required(),
@@ -67,9 +68,7 @@ class AppointmentController {
     const hourStart = startOfHour(parseISO(date));
 
     if (isBefore(hourStart, new Date())) {
-      return res
-        .status(400)
-        .json({ error: 'Past dates are not permitted.' });
+      return res.status(400).json({ error: 'Past dates are not permitted.' });
     }
 
     /**
@@ -80,7 +79,7 @@ class AppointmentController {
         provider_id,
         canceled_at: null,
         date: hourStart,
-      }
+      },
     });
 
     if (checkAvailability) {
@@ -89,7 +88,7 @@ class AppointmentController {
         .json({ error: 'Appointment date is not available.' });
     }
 
-    if(req.userId === provider_id) {
+    if (req.userId === provider_id) {
       return res
         .status(401)
         .json({ error: 'You cannot create and appointment with yourself.' });
@@ -120,30 +119,35 @@ class AppointmentController {
 
     return res.json(appointment);
   }
+
   async delete(req, res) {
     const appointment = await Appointment.findByPk(req.params.id, {
       include: [
         {
           model: User,
           as: 'provider',
-          attributes: ['name', 'email']
+          attributes: ['name', 'email'],
         },
         {
           model: User,
           as: 'user',
-          attributes: ['name']
-        }
-      ]
+          attributes: ['name'],
+        },
+      ],
     });
 
-    if(appointment.user_id !== req.userId) {
-      return res.status(401).json({ error: 'You don`t have permission to cancel this appointment'});
+    if (appointment.user_id !== req.userId) {
+      return res.status(401).json({
+        error: 'You don`t have permission to cancel this appointment',
+      });
     }
 
     const dateWithSub = subHours(appointment.date, 2);
 
-    if(isBefore(dateWithSub, new Date())) {
-      return res.status(401).json({ error: 'You can only cancel appointments 2 hours in advance. '});
+    if (isBefore(dateWithSub, new Date())) {
+      return res.status(401).json({
+        error: 'You can only cancel appointments 2 hours in advance. ',
+      });
     }
 
     appointment.canceled_at = new Date();
@@ -157,12 +161,10 @@ class AppointmentController {
       context: {
         provider: appointment.provider.name,
         user: appointment.user.name,
-        date: format(
-          appointment.date,
-          "'dia' dd 'de' MMMM', às ' H:MM'h'",
-          { locale: ptBR }
-        )
-      }
+        date: format(appointment.date, "'dia' dd 'de' MMMM', às ' H:MM'h'", {
+          locale: ptBR,
+        }),
+      },
     });
 
     return res.json(appointment);
